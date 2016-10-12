@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ * The MIT License
+ *
+ * Copyright 2016 Steappe Open Source.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+-->
+
+<facelet-taglib version="2.2"
+                xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-facelettaglibrary_2_2.xsd">
+    <namespace>http://steappe.org/jsf</namespace>
+    <composite-library-name>steappe</composite-library-name>
+    
+    <tag>
+        <description>
+            This UI component observes an event dispatched by the client-side eventing framework. When such an event
+            occurs, this UI component sends an AJAX request to the server.
+        </description>
+        <tag-name>eventObserver</tag-name>
+        
+        <component>
+            <component-type>steappe.jsf.eventing.EventObserver</component-type>
+        </component>
+        
+        <attribute>
+            <description>
+                The name of the event to observe. Each event belongs to a group, specified by the group attribute.
+            </description>
+            <name>event</name>
+            <type>java.lang.String</type>
+            <required>true</required>
+        </attribute>
+        
+        <attribute>
+            <description>
+                The name of the group to which the event belongs. This attribute is optional; when not present, it
+                defaults to 'global'.
+            </description>
+            <name>group</name>
+            <type>java.lang.String</type>
+            <required>false</required>
+        </attribute>
+        
+        <attribute>
+            <description>
+                A space separated string of client IDs to update on ajax response.
+            </description>
+            <name>render</name>
+            <type>java.lang.String</type>
+            <required>false</required>
+        </attribute>
+        
+		<attribute>
+			<description>
+				<![CDATA[
+					<code>MethodExpression</code> representing an action listener method that will be notified when this
+					component is activated by the user. The expression must evaluate to a public method that takes an 
+					<code>ActionEvent</code> parameter, with a return type of void, or to a public method that takes no
+					arguments with a return type of void. In the latter case, the method has no way of easily knowing
+					where the event came from, but this can be useful in cases where a notification is needed that
+					"some action happened".
+				]]>
+			</description>
+			<name>actionListener</name>
+			<required>false</required>
+			<method-signature>void actionListener(javax.faces.event.ActionEvent)</method-signature>
+		</attribute>
+    </tag>
+    
+    <tag>
+        <description>
+            This tag adds a client behavior to the nesting UI component. The client behavior reacts on a client event
+            specified by the 'on' attribute, and when such an event occurs a corresponding 'semantic' event is
+            dispatched to the client-side eventing framework.
+        </description>
+        <tag-name>eventProducer</tag-name>
+        <handler-class>steappe.jsf.eventing.EventProducerHandler</handler-class>
+        
+        <attribute>
+            <description>
+                The name of the client behavior event to react on. When this event occurs, a corresponding 'semantic'
+                event is dispatched to the cliend-side eventing framework.
+            </description>
+            <name>on</name>
+            <type>java.lang.String</type>
+            <required>true</required>
+        </attribute>
+        
+        <attribute>
+            <description>
+                The name of the 'semantic' event to dispatch to the client-side eventing framework. Each event belongs
+                to a group, specified by the 'group' attribute.
+            </description>
+            <name>event</name>
+            <type>java.lang.String</type>
+            <required>true</required>
+        </attribute>
+        
+        <attribute>
+            <description>
+                The name of the group to which the 'semantic' event belongs. This attribute is optional; when not
+                present, it defaults to 'global'.
+            </description>
+            <name>group</name>
+            <type>java.lang.String</type>
+            <required>false</required>
+        </attribute>
+    </tag>
+</facelet-taglib>
