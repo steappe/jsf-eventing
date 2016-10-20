@@ -25,6 +25,9 @@
 package steappe.jsf.eventing;
 
 import java.io.IOException;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
@@ -48,18 +51,83 @@ public class EventObserverRenderer extends Renderer {
      * The renderer type implemented by this renderer.
      */
     static public final String RENDERER_TYPE = "steappe.jsf.eventing.observer";
+    
+    static private final char QUOTE = '\'';
+    
+    static private final char COMMA = ',';
+    
+    /**
+     * Converts relative client IDs into absolute client IDs.
+     * 
+     * @param context the faces context.
+     * @param eventObserver the event observer.
+     * @param relativeClientIds the relative client IDs.
+     * @return the space separated list of absolute client IDs.
+     */
+    static private String toAbsoluteClientIds(
+            FacesContext context,
+            EventObserverComponent eventObserver,
+            Stream<String> relativeClientIds) {
+        Set<String> absoluteClientIds = relativeClientIds.map(relativeClientId ->
+                toAbsoluteClientId(context, eventObserver, relativeClientId)
+        ).collect(Collectors.toSet());
+        
+        StringBuilder builder = new StringBuilder(256);
+        absoluteClientIds.forEach(clientId -> builder.append(clientId).append(' '));
+        
+        return builder.toString().trim();
+    }
+    
+    /**
+     * Converts a relative client ID into an absolute client ID.
+     * 
+     * @param context the faces context.
+     * @param eventObserver the event observer.
+     * @param relativeClientId the relative client ID.
+     * @return the corresponding absolute client ID.
+     */
+    static private String toAbsoluteClientId(
+            FacesContext context,
+            EventObserverComponent eventObserver,
+            String relativeClientId) {
+        String absoluteClientId;
+        
+        if (relativeClientId.isEmpty() || relativeClientId.charAt(0) == '@') {
+            absoluteClientId = relativeClientId;
+        }
+        else {
+            UIComponent clientComponent = eventObserver.findComponent(relativeClientId);
+            
+            if (clientComponent == null) {
+                throw new IllegalArgumentException("no such component: " + relativeClientId);
+            }
+            
+            absoluteClientId = clientComponent.getClientId(context);
+        }
+        
+        return absoluteClientId;
+    }
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
         if (component instanceof EventObserverComponent) {
-            EventObserverComponent renderedComponent = (EventObserverComponent) component;
+            EventObserverComponent eventObserver = (EventObserverComponent) component;
             
-            String clientId = renderedComponent.getClientId(context);
+            String clientId = eventObserver.getClientId(context);
             ResponseWriter writer = context.getResponseWriter();
-            writer.startElement("span", renderedComponent);
+            writer.startElement("span", eventObserver);
             writer.writeAttribute("id", clientId, "id");
-            writer.startElement("script", renderedComponent);
-            encodeFunction(context, renderedComponent);
+            writer.startElement("script", eventObserver);
+            writer.append("\n");
+            
+            ObservedEvent[] observedEvents = eventObserver.getObservedEvents().toArray(ObservedEvent[]::new);
+            
+            /**
+             * encode the observed events
+             */
+            for (ObservedEvent observedEvent : observedEvents) {
+                encodeEvent(context, eventObserver, observedEvent);
+            }
         }
     }
 
@@ -75,99 +143,52 @@ public class EventObserverRenderer extends Renderer {
     @Override
     public void decode(FacesContext context, UIComponent component) {
         if (component instanceof EventObserverComponent) {
-            EventObserverComponent renderedComponent = (EventObserverComponent) component;
+            EventObserverComponent eventObserver = (EventObserverComponent) component;
             
-            String clientId = renderedComponent.getClientId(context);
+            String clientId = eventObserver.getClientId(context);
             String source = context.getExternalContext().getRequestParameterMap().get("javax.faces.source");
 
             if (clientId.equals(source)) {
-                ActionEvent event = new ActionEvent(renderedComponent);
-                PhaseId phaseId = renderedComponent.isImmediate() ?
+                ActionEvent event = new ActionEvent(eventObserver);
+                PhaseId phaseId = eventObserver.isImmediate() ?
                         PhaseId.APPLY_REQUEST_VALUES :
                         PhaseId.INVOKE_APPLICATION;
                 event.setPhaseId(phaseId);
-                renderedComponent.queueEvent(event);
+                eventObserver.queueEvent(event);
             }
         }
     }
     
     /**
-     * Encodes the JavaScript function to execute after this UI component is loaded in the DOM.
+     * Encodes the JavaScript instruction to register an observed event in the client-side event framework.
      * 
      * @param context the faces context.
-     * @param component the UI component being rendered.
+     * @param eventObserver the event observer.
+     * @param observedEvent the observed event.
      * @throws IOException if an I/O error occurred during the encoding.
      */
-    private void encodeFunction(FacesContext context, EventObserverComponent component) throws IOException {
+    private void encodeEvent(
+            FacesContext context,
+            EventObserverComponent eventObserver,
+            ObservedEvent observedEvent) throws IOException {
         ResponseWriter writer = context.getResponseWriter();
-        String group = component.getGroup();
-        String event = component.getEvent();
-        String clientId = component.getClientId(context);
-        String execute = component.getExecute();
-        String render = component.getRender();
+        String clientId = eventObserver.getClientId(context);
+        String group = eventObserver.getGroup();
+        String event = observedEvent.getEvent(context);
+        String execute = toAbsoluteClientIds(context, eventObserver, observedEvent.getExecute(context));
+        String render = toAbsoluteClientIds(context, eventObserver, observedEvent.getRender(context));
         
-        /**
-         * the execute and render attributes have client IDs relative to their naming container
-         * but for the AJAX request we need absolute client IDs
-         */
-        execute = toAbsoluteClientIds(context, component, execute);
-        render = toAbsoluteClientIds(context, component, render);
-        
-        writer.append("\n");
         writer.append("steappe.eventing.register(");
-        writer.append("'").append(group).append("'");
-        writer.append(", '").append(event).append("'");
-        writer.append(", '").append(clientId).append("'");
-        writer.append(", '").append(execute).append("'");
-        writer.append(", '").append(render).append("'");
+        writer.append(QUOTE).append(clientId).append(QUOTE);
+        writer.append(COMMA);
+        writer.append(QUOTE).append(group).append(QUOTE);
+        writer.append(COMMA);
+        writer.append(QUOTE).append(event).append(QUOTE);
+        writer.append(COMMA);
+        writer.append(QUOTE).append(execute).append(QUOTE);
+        writer.append(COMMA);
+        writer.append(QUOTE).append(render).append(QUOTE);
         writer.append(");");
         writer.append("\n");
     }
-    
-    /**
-     * Converts a space separated list of relative client IDs into a space separated list of absolute client IDs.
-     * 
-     * @param context the faces context.
-     * @param component the UI component being rendered.
-     * @param relativeClientIds the space separated list of relative client IDs to convert.
-     * @return the corresponding space separated list of absolute client IDs.
-     */
-    private String toAbsoluteClientIds(FacesContext context, EventObserverComponent component, String relativeClientIds) {
-        StringBuilder builder = new StringBuilder(256);
-        
-        EventObserverComponent.WHITESPACE_SEPARATED_LIST_PATTERN.splitAsStream(relativeClientIds).forEach(relativeClientId -> {
-            String absoluteClientId = toAbsoluteClientId(context, component, relativeClientId);
-            builder.append(absoluteClientId).append(' ');
-        });
-        
-        return builder.toString().trim();
-    }
-    
-    /**
-     * Converts a relative client ID into an absolute client ID.
-     * 
-     * @param context the faces context.
-     * @param component the UI component being rendered.
-     * @param relativeClientId the relative client ID.
-     * @return the corresponding absolute client ID.
-     */
-    private String toAbsoluteClientId(FacesContext context, EventObserverComponent component, String relativeClientId) {
-        String absoluteClientId;
-        
-        if (relativeClientId.isEmpty() || relativeClientId.charAt(0) == '@') {
-            absoluteClientId = relativeClientId;
-        }
-        else {
-            UIComponent clientComponent = component.findComponent(relativeClientId);
-            
-            if (clientComponent == null) {
-                throw new IllegalArgumentException("no such component: " + relativeClientId);
-            }
-            
-            absoluteClientId = clientComponent.getClientId(context);
-        }
-        
-        return absoluteClientId;
-    }
-    
 }

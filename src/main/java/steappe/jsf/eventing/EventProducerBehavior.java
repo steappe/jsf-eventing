@@ -50,16 +50,16 @@ public class EventProducerBehavior extends ClientBehaviorBase {
     static private final Set<ClientBehaviorHint> HINTS = Collections.unmodifiableSet(
             EnumSet.of(ClientBehaviorHint.SUBMITTING)
     );
-    
-    /**
-     * The name of the event fired by the event producer.
-     */
-    private String event;
 
     /**
-     * The name of the group of events to which the event belongs. The event is unique in that group.
+     * The name of the event group.
      */
     private String group;
+    
+    /**
+     * The space separated list of event names fired by the event producer.
+     */
+    private String events;
     
     @Override
     public String getRendererType() {
@@ -70,40 +70,40 @@ public class EventProducerBehavior extends ClientBehaviorBase {
     public Set<ClientBehaviorHint> getHints() {
         return HINTS;
     }
-    
-    /**
-     * Sets the name of the event fired by the event producer.
-     * 
-     * @param event the name of the event.
-     */
-    public void setEvent(String event) {
-        this.event = event;
-    }
-    
-    /**
-     * Gets the name of the event fired by the event producer.
-     * 
-     * @return the name of the event.
-     */
-    public String getEvent() {
-        return this.event;
-    }
 
     /**
-     * Sets the name of the group of events to which the event belongs.
+     * Sets the name of of the event group.
      * 
-     * @param group the name of the group of events.
+     * @param group the name of the event group.
      */
     public void setGroup(String group) {
         this.group = group;
     }
     
     /**
-     * Gets the name of the group of events to which the event belongs.
+     * Gets the name of the event group. If none is specified, it defaults to "global".
      * 
-     * @return the name of the group of events.
+     * @return the name of the event group.
      */
     public String getGroup() {
         return this.group;
+    }
+    
+    /**
+     * Sets the space separated liste of event names fired by the event producer.
+     * 
+     * @param events the space separated list of event names.
+     */
+    public void setEvents(String events) {
+        this.events = events;
+    }
+    
+    /**
+     * Gets the space separated liste of event names fired by the event producer.
+     * 
+     * @return the space separated list of event names.
+     */
+    public String getEvents() {
+        return this.events;
     }
 }

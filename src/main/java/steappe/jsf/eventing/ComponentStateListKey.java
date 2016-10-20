@@ -21,54 +21,64 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
 package steappe.jsf.eventing;
 
+import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 import javax.faces.component.StateHelper;
 
 /**
- * The key that identifies a value in a UI component's state.
+ * The key that refers to a list of values in a component's state.
  * 
  * @author Stéphane Appercel - creation.
- * @param <V> the generic type of the value identified by this key.
+ * @param <V> the generic type of the values stored in the list identified by this key.
  */
-public interface ComponentStateKey<V> {
+public interface ComponentStateListKey<V> {
     
     /**
-     * Gets a value associated to this key in the component's state.
+     * Adds the specified value in the list referred to by this key in the component's state.
      * 
-     * @param stateHelper the component state helper.
-     * @return the optionally retrieved value.
+     * @param stateHelper the component's state helper.
+     * @param value the value to add.
      */
-    default Optional<V> get(StateHelper stateHelper) {
-        String name = name();
-        Class<V> type = type();
-        return Optional.ofNullable(type.cast(stateHelper.eval(name)));
+    default void add(StateHelper stateHelper, V value) {
+        String key = name();
+        stateHelper.add(key, value);
     }
     
     /**
-     * Gets a value associated to this key in the component's state.
+     * Removes the specified value from the list referred to by this key in the component's state.
      * 
-     * @param stateHelper the component state helper.
-     * @param defaultValue the default value to return when no value is associated to this key.
-     * @return the retrieved value, or the specified default value when no value is associated to this key.
+     * @param stateHelper the component's state helper.
+     * @param value the value to remove.
      */
-    default V get(StateHelper stateHelper, V defaultValue) {
-        String name = name();
-        Class<V> type = type();
-        return type.cast(stateHelper.eval(name, defaultValue));
+    default void remove(StateHelper stateHelper, V value) {
+        String key = name();
+        stateHelper.remove(key, value);
     }
     
     /**
-     * Puts the value associated to this key in the component's state.
+     * Gets all the values present in the list referred to by this key in the component's state.
      * 
-     * @param stateHelper the component state helper.
-     * @param value the value to associate to this key.
+     * @param stateHelper the component's state helper.
+     * @return all the values.
      */
-    default void put(StateHelper stateHelper, V value) {
-        String name = name();
-        stateHelper.put(name, value);
+    default Stream<V> getValues(StateHelper stateHelper) {
+        String key = name();
+        Class<V> type = type();
+        Optional<Collection<?>> values = Optional.ofNullable((Collection<?>) stateHelper.get(key));
+        return values.map(Collection::stream).orElse(Stream.empty()).map(type::cast);
+    }
+    
+    /**
+     * Removes all the values present in the list referred to by this key in the component's state.
+     * 
+     * @param stateHelper the component's state helper.
+     */
+    default void removeAll(StateHelper stateHelper) {
+        String key = name();
+        stateHelper.remove(key);
     }
     
     /**

@@ -52,14 +52,14 @@ public class EventProducerHandler extends TagHandler {
     private final TagAttribute on;
     
     /**
-     * The name of event to produce. This event is dispatched to all the interested observers.
-     */
-    private final TagAttribute event;
-    
-    /**
-     * The name of the group of events to which the event belongs. It's optional, and it defaults to 'global'.
+     * The name of the group of events. It's optional and it defaults to 'global'.
      */
     private final Optional<TagAttribute> group;
+    
+    /**
+     * The space separated list of event names to produce. These events are dispatched to all the interested observers.
+     */
+    private final TagAttribute events;
     
     /**
      * Constructs the tag handler.
@@ -71,7 +71,7 @@ public class EventProducerHandler extends TagHandler {
         
         this.on = getRequiredAttribute("on");
         this.group = Optional.ofNullable(getAttribute("group"));
-        this.event = getRequiredAttribute("event");
+        this.events = getRequiredAttribute("events");
     }
     
     @Override
@@ -80,13 +80,13 @@ public class EventProducerHandler extends TagHandler {
             if (parent instanceof ClientBehaviorHolder) {
                 ClientBehaviorHolder holder = (ClientBehaviorHolder) parent;
                 
-                String onValue = on.getValue(ctx);
+                String onValue = on.getValue();
                 String groupValue = group.map(attribute -> attribute.getValue(ctx)).orElse(DEFAULT_GROUP);
-                String eventValue = event.getValue(ctx);
+                String eventsValue = events.getValue(ctx);
                 
                 EventProducerBehavior behavior = new EventProducerBehavior();
                 behavior.setGroup(groupValue);
-                behavior.setEvent(eventValue);
+                behavior.setEvents(eventsValue);
                 holder.addClientBehavior(onValue, behavior);
             }
             else {
