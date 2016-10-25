@@ -47,6 +47,10 @@ public class EventProducerRenderer extends ClientBehaviorRenderer {
      * The renderer type implemented by this renderer.
      */
     static public final String RENDERER_TYPE = "steappe.jsf.eventing.producer";
+    
+    static private final char QUOTE = '\'';
+    
+    static private final char COMMA = ',';
 
     @Override
     public String getScript(ClientBehaviorContext behaviorContext, ClientBehavior behavior) {
@@ -56,15 +60,17 @@ public class EventProducerRenderer extends ClientBehaviorRenderer {
             EventProducerBehavior dispatcherBehavior = (EventProducerBehavior) behavior;
             
             String group = dispatcherBehavior.getGroup();
-            String event = dispatcherBehavior.getEvent();
+            String events = dispatcherBehavior.getEvents();
             
             /**
              * the script dispatches the produced event to all the interested observers
              */
             StringBuilder builder = new StringBuilder(256);
             builder.append("steappe.eventing.dispatch(");
-            builder.append('\'').append(group).append("', ");
-            builder.append('\'').append(event).append("')");
+            builder.append(QUOTE).append(group).append(QUOTE);
+            builder.append(COMMA);
+            builder.append(QUOTE).append(events).append(QUOTE);
+            builder.append(')');
             script = builder.toString();
         }
         else {

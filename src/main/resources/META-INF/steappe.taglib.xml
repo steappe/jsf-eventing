@@ -44,28 +44,10 @@
         
         <attribute>
             <description>
-                The name of the event to observe. Each event belongs to a group, specified by the group attribute.
-            </description>
-            <name>event</name>
-            <type>java.lang.String</type>
-            <required>true</required>
-        </attribute>
-        
-        <attribute>
-            <description>
                 The name of the group to which the event belongs. This attribute is optional; when not present, it
                 defaults to 'global'.
             </description>
             <name>group</name>
-            <type>java.lang.String</type>
-            <required>false</required>
-        </attribute>
-        
-        <attribute>
-            <description>
-                A space separated string of client IDs to update on ajax response.
-            </description>
-            <name>render</name>
             <type>java.lang.String</type>
             <required>false</required>
         </attribute>
@@ -98,8 +80,8 @@
         
         <attribute>
             <description>
-                The name of the client behavior event to react on. When this event occurs, a corresponding 'semantic'
-                event is dispatched to the cliend-side eventing framework.
+                The name of the client behavior event to react on. When this event occurs, a list of 'semantic'
+                events is dispatched to the cliend-side eventing framework.
             </description>
             <name>on</name>
             <type>java.lang.String</type>
@@ -108,8 +90,33 @@
         
         <attribute>
             <description>
-                The name of the 'semantic' event to dispatch to the client-side eventing framework. Each event belongs
-                to a group, specified by the 'group' attribute.
+                The name of the group of 'semantic' events produced by this element.
+            </description>
+            <name>group</name>
+            <type>java.lang.String</type>
+            <required>false</required>
+        </attribute>
+        
+        <attribute>
+            <description>
+                The space separated list of event names to dispatch to the client-side eventing framework.
+            </description>
+            <name>events</name>
+            <type>java.lang.String</type>
+            <required>true</required>
+        </attribute>
+    </tag>
+    
+    <tag>
+        <description>
+            An event added to an event observer.
+        </description>
+        <tag-name>onEvent</tag-name>
+        <handler-class>steappe.jsf.eventing.OnEventHandler</handler-class>
+        
+        <attribute>
+            <description>
+                The name of the event.
             </description>
             <name>event</name>
             <type>java.lang.String</type>
@@ -118,10 +125,18 @@
         
         <attribute>
             <description>
-                The name of the group to which the 'semantic' event belongs. This attribute is optional; when not
-                present, it defaults to 'global'.
+                
             </description>
-            <name>group</name>
+            <name>execute</name>
+            <type>java.lang.String</type>
+            <required>false</required>
+        </attribute>
+        
+        <attribute>
+            <description>
+                
+            </description>
+            <name>render</name>
             <type>java.lang.String</type>
             <required>false</required>
         </attribute>

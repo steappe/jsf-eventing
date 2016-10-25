@@ -24,12 +24,15 @@
 
 package steappe.jsf.eventing;
 
-import java.util.regex.Pattern;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Stream;
 import javax.faces.application.ResourceDependencies;
 import javax.faces.application.ResourceDependency;
 import javax.faces.component.FacesComponent;
 import javax.faces.component.StateHelper;
 import javax.faces.component.UICommand;
+import static javax.faces.component.UICommand.COMPONENT_FAMILY;
 
 /**
  * The event observer UI component.
@@ -42,19 +45,19 @@ import javax.faces.component.UICommand;
     @ResourceDependency(library = "steappe", name = "js/eventing.js", target = "head")
 })
 public class EventObserverComponent extends UICommand {
-
-    /**
-     * The REGEX pattern used to split a whitespace separated list of client IDs.
-     */
-    static public final Pattern WHITESPACE_SEPARATED_LIST_PATTERN = Pattern.compile("\\s+");
     
     /**
      * The helper to access this component's state.
      */
     private final StateHelper stateHelper;
+    
+    /**
+     * The list of events observed by this observer - intentionally not saved in the component's state holder.
+     */
+    private final List<ObservedEvent> observedEvents = new LinkedList<>();
 
     /**
-     * Constructs this faces component.
+     * Constructs this UI component.
      */
     public EventObserverComponent() {
         super.setRendererType(EventObserverRenderer.RENDERER_TYPE);
@@ -68,15 +71,6 @@ public class EventObserverComponent extends UICommand {
     }
     
     /**
-     * Gets the name of the event group. If none is specified, it defaults to "global".
-     * 
-     * @return the name of the event group.
-     */
-    public String getGroup() {
-        return StringKeys.group.get(stateHelper, EventProducerHandler.DEFAULT_GROUP);
-    }
-    
-    /**
      * Sets the name of of the event group.
      * 
      * @param group the name of the event group
@@ -86,69 +80,41 @@ public class EventObserverComponent extends UICommand {
     }
     
     /**
-     * Gets the name of the event observed by this UI component. This name shall be unique in the event group.
+     * Gets the name of the event group. If none is specified, it defaults to "global".
      * 
-     * @return the name of the observed event.
+     * @return the name of the event group.
      */
-    public String getEvent() {
-        return StringKeys.event.get(stateHelper);
+    public String getGroup() {
+        return StringKeys.group.get(stateHelper, EventProducerHandler.DEFAULT_GROUP);
     }
     
     /**
-     * Sets the name of the event observed by this UI component. This name shall be unique in the event group.
+     * Adds an observed event.
      * 
-     * @param event the name of the observed event.
+     * @param observedEvent the event to observe.
      */
-    public void setEvent(String event) {
-        StringKeys.event.put(stateHelper, event);
+    public void addObservedEvent(ObservedEvent observedEvent) {
+        observedEvents.add(observedEvent);
     }
     
     /**
-     * Gets the space separated list of client IDs to render after the AJAX request has completed.
+     * Gets the observed events.
      * 
-     * @return the space separated list of client IDs to render.
+     * @return the observed events.
      */
-    public String getRender() {
-        return StringKeys.render.get(stateHelper, "@none");
+    public Stream<ObservedEvent> getObservedEvents() {
+        return observedEvents.stream();
     }
     
     /**
-     * Sets the space separated list of client IDs to render after the AJAX request has completed.
-     * 
-     * @param render the space separated list of client IDs to render.
-     */
-    public void setRender(String render) {
-        StringKeys.render.put(stateHelper, render);
-    }
-    
-    /**
-     * Gets the space separated list of client IDs to process during the execution of the AJAX request.
-     * 
-     * @return the space separated list of client IDs to process.
-     */
-    public String getExecute() {
-        return StringKeys.execute.get(stateHelper, "@this");
-    }
-    
-    /**
-     * Sets the space separated list of client IDs to process during the execution of the AJAX request.
-     * 
-     * @param execute the space separated list of client IDs to process.
-     */
-    public void setExecute(String execute) {
-        StringKeys.execute.put(stateHelper, execute);
-    }
-    
-    /**
-     * The names of the attributes used by this UI component.
+     * The names of the tag attributes of type String used by this UI component.
      */
     private static enum StringKeys implements ComponentStateKey<String> {
-        group, event, render, execute;
+        group;
 
         @Override
         public Class<String> type() {
             return String.class;
         }
     }
-    
 }
